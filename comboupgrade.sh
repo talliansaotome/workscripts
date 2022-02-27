@@ -230,7 +230,7 @@ ln -s data-"$VERSION" next.data || { echo "Linking the next data/ dir failed." ;
 echo "Checking for changes to config files..."
 if [[ $APP = confluence ]] ; then
 	echo "Fetching and installing the app"
-	wget --progress=dot:mega https://www.atlassian.com/software/confluence/downloads/binary/atlassian-confluence-"$VERSION".tar.gz -O atlassian-confluence-"$VERSION".tar.gz || { echo "Download failed" ; exit 1; }
+	wget -q https://www.atlassian.com/software/confluence/downloads/binary/atlassian-confluence-"$VERSION".tar.gz -O atlassian-confluence-"$VERSION".tar.gz || { echo "Download failed" ; exit 1; }
 	tar xzf atlassian-confluence-"$VERSION".tar.gz || { echo "Extracting failed..." ; exit 1; }
 	ln -s atlassian-confluence-"$VERSION" next || { echo "Linking the next current/ dir failed" ; read -r -n 1 -p "Press any key to continue ..."; }
 	rm atlassian-confluence-"$VERSION".tar.gz
@@ -264,7 +264,7 @@ if [[ $APP = confluence ]] ; then
 	done
 elif [[ $APP = jira ]] ; then
 	echo "Fetching and installing the app"
-	wget --progress=dot:mega https://www.atlassian.com/software/jira/downloads/binary/atlassian-jira-software-$VERSION.tar.gz -O atlassian-jira-software-$VERSION.tar.gz || { echo "Download failed" ; exit 1; }
+	wget -q https://www.atlassian.com/software/jira/downloads/binary/atlassian-jira-software-$VERSION.tar.gz -O atlassian-jira-software-$VERSION.tar.gz || { echo "Download failed" ; exit 1; }
 	tar xzf atlassian-jira-software-$VERSION.tar.gz || { echo "Extracting failed..." ; exit 1; }
 	ln -s atlassian-jira-software-$VERSION-standalone next || { echo "Linking the next current/ dir failed"; read -r -n 1 -p "Press any key to continue ..."; }
 	rm atlassian-jira-software-$VERSION.tar.gz
