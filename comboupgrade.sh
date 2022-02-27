@@ -387,7 +387,7 @@ fi
 if [[ "$DATABASECONNECTION" == *"localhost"* ]]; then
 	## Restore database
 	echo "Re-creating and restoring database..."
-	su - postgres -p -c "dropdb $DATABASE" || echo "Failed to drop existing database" || exit 1
+	su - postgres -p -c "dropdb $DATABASE" || { echo "Failed to drop existing database" ; exit 1; }
 	su - postgres -p -c "createdb -E UNICODE -O $DATABASEUSERNAME $DATABASE" || { echo "Database creation failed"; exit 1; }
 
 	export PGPASSWORD=$DATABASEPASSWORD
