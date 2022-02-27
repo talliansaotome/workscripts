@@ -1,0 +1,13 @@
+{
+    "window.autoDetectColorScheme": true,
+    "editor.cursorBlinking": "expand",
+    "editor.cursorStyle": "block",
+    "editor.find.autoFindInSelection": "multiline",
+    "editor.formatOnPaste": true,
+    "editor.formatOnType": true,
+    "diffEditor.codeLens": true,
+    "editor.minimap.showSlider": "always",
+    "editor.suggest.localityBonus": true,
+    "editor.suggest.preview": true,
+    "files.autoSave": "afterDelay"
+}
