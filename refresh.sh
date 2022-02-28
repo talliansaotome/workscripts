@@ -362,24 +362,23 @@ elif [[ "$CHOICE" = "2" ]] ; then
     fi
 
     ## check if database is local
-    if [[ "$DATABASECONNECTION" == *"localhost"* ]]; then
+    if [[ "$LOCAL" == "true" ]] ; then
         ## Restore database
         echo "Re-creating and restoring database..."
         su - postgres -p -c "dropdb $DATABASE" || { echo "Failed to drop existing database" ; exit 1; }
         su - postgres -p -c "createdb -E UNICODE -O $DATABASEUSERNAME $DATABASE" || { echo "Database creation failed"; exit 1; }
-
         export PGPASSWORD=$DATABASEPASSWORD
         time su - postgres -p -c "zcat /var/lib/pgsql/backups/other/$DATABASE-PRE-$TICKET.dmp.gz | psql -U $DATABASEUSERNAME $DATABASE" || { echo "Database import failed"; exit 1; }
-    else
-        echo "Database is not local, check at $DATABASECONNECTION"
-        echo "Please restore database there, will continue after a pause"
-        read -r -n 1 -p "Press any key to continue ..."
+    elif [[ "$LOCAL" == "true" ]] ; then
+        echo "Re-creating and restoring database..."
+        ssh $REMOTE 'su - postgres -p -c "dropdb $DATABASE"' || { echo "Failed to drop existing database" ; exit 1; }
+        ssh $REMOTE 'su - postgres -p -c "createdb -E UNICODE -O $DATABASEUSERNAME $DATABASE"' || { echo "Database creation failed"; exit 1; }
+        ssh $REMOTE 'PGPASSWORD=$DATABASEPASSWORD; time su - postgres -p -c "zcat /var/lib/pgsql/backups/other/$DATABASE-PRE-$TICKET.dmp.gz | psql -U $DATABASEUSERNAME $DATABASE"' || { echo "Database import failed"; exit 1; }
     fi
 
     ## Restore files
-    mv -v data/attachments prev.data/ || { echo "Failed to move attachments back..."; exit 1; }
-    mv -v current failed-"$TICKET" && mv -v data failed.data-"$TICKET" || { echo "Failed to move symlinks to failed targets..." ; exit 1; }
-    mv -v prev current && mv -v prev.data data || { echo "Failed to restore original symlinks..." ; exit 1; }
+    mv -v data failed.data-"$TICKET" || { echo "Failed to move symlinks to failed targets..." ; exit 1; }
+    mv -v prev.data data || { echo "Failed to restore original symlinks..." ; exit 1; }
 
     ## Start and watch
     systemctl start "$SERVICENAME" && tail -F $APPLOG
