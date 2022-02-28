@@ -76,15 +76,13 @@ do
 				;;
 			esac
 			;;
-
-
-##  Help text, could you tell?
+        ##  Help text, could you tell?
 		-h|--help)
 			printf "write new help eventually"
 			exit 0
 			;;
 			
-## Define blank as no more opts
+        ## Define blank as no more opts
 		--) shift ; break ;;
 	esac
 done
@@ -168,7 +166,6 @@ if [[ "$REMOTEPATH" == "" ]] ; then
 	read -r -p "Source server path to application? " REMOTEPATH
 fi
 
-
 echo ""
 
 ###Put ourselves in a screen session
@@ -214,178 +211,178 @@ echo ""
 
 
 if [ "$CHOICE" = "1" ] ; then
-#########################
-### TIME FOR WORK ######
-########################
+    #########################
+    ### TIME FOR WORK ######
+    ########################
 
-##Do we need to clean up from a previous upgrade?
-if [[ -e prev ]] ; then
-	echo "Please cleanup after previous activity!"
-	exit 1
-elif [[ -e prev.data ]] ; then
+    ##Do we need to clean up from a previous upgrade?
+    if [[ -e prev ]] ; then
         echo "Please cleanup after previous activity!"
         exit 1
-fi
+    elif [[ -e prev.data ]] ; then
+            echo "Please cleanup after previous activity!"
+            exit 1
+    fi
 
 
-## Check for enough space to do the work
-echo "Checking for enough disk space for the upgrade..."
-if [[ "$LOCAL" == "false" ]] ; then
-    DATADIRSIZE=$( ssh $REMOTE du -sk "$SHAREDOPTS" $REMOTEPATH/data/ | awk '{print $1}' )
-    FREESPACE=$( df -k . --output=avail | tail -1 )
-elif [[ "$LOCAL" == "true" ]] ; then
-    DATADIRSIZE=$( du -sk "$SHAREDOPTS" data/ | awk '{print $1}' )
-    FREESPACE=$( df -k . --output=avail | tail -1 )
-fi
+    ## Check for enough space to do the work
+    echo "Checking for enough disk space for the upgrade..."
+    if [[ "$LOCAL" == "false" ]] ; then
+        DATADIRSIZE=$( ssh $REMOTE du -sk "$SHAREDOPTS" $REMOTEPATH/data/ | awk '{print $1}' )
+        FREESPACE=$( df -k . --output=avail | tail -1 )
+    elif [[ "$LOCAL" == "true" ]] ; then
+        DATADIRSIZE=$( du -sk "$SHAREDOPTS" data/ | awk '{print $1}' )
+        FREESPACE=$( df -k . --output=avail | tail -1 )
+    fi
 
-if [[ $FREESPACE -lt $(( 2 * $DATADIRSIZE )) ]] ; then
-	echo "Not enough free space, aborting."
-	exit 1
-else
-	echo "Enough space found, proceeding."
-fi
+    if [[ $FREESPACE -lt $(( 2 * $DATADIRSIZE )) ]] ; then
+        echo "Not enough free space, aborting."
+        exit 1
+    else
+        echo "Enough space found, proceeding."
+    fi
 
-## Prep, create restore data
+    ## Prep, create restore data
 
-echo "Stopping service..."
-systemctl stop $SERVICENAME
-echo "Dumping local database $DATABASE in /var/lib/pgsql/backups/other/"
-if [[ ! -d /var/lib/pgsql/backups/other/ ]] ; then
-        mkdir -p /var/lib/pgsql/backups/other/
-fi
-su - postgres -c "pg_dump96 -O $DATABASE | gzip > /var/lib/pgsql/backups/other/$DATABASE-PRE-$TICKET.dmp.gz"
-cp -av data/confluence.cfg.xml confluence.cfg.xml-CURRENT
-
-
-##Set up the files
-
-# Clone the data
-echo "Copying data dir"
-if [[ "$LOCAL" == "false" ]] ; then
-    time rsync -aHS "$SHAREDOPTS" $REMOTE:$REMOTEPATH/data/ data-REFRESH-"$TICKET"/ || { echo "Failed to rsync remote data." ; exit 1; }
-elif [[ "$LOCAL" == "true" ]] ; then
-    time rsync -aHS "$SHAREDOPTS" $REMOTEPATH/data/ data-REFRESH-"$TICKET"/ || { echo "Failed to rsync data." ; exit 1; }
-fi
-ln -s data-REFRESH-"$TICKET" next.data || { echo "Linking the next data/ dir failed." ; read -r -n 1 -p "Press any key to resume ..."; }
-
-## Parse out old settings
-if [[ $SOURCEDATABASE == "" ]] ; then
-	SOURCEDATABASECONNECTION=$( awk -F '[<>]' '/url/{print $3}' data-REFRESH-"$TICKET"/$( basename $CONFIGFILE ) )
-	SOURCEDATABASE=$( awk -F '[/?]' '{print $4}' <<< "$SOURCEDATABASECONNECTION" )
-    SOURCEDATABASEPASSWORD=$(awk -F '[<>]' '/password/{print $3}' data-REFRESH-"$TICKET"/$( basename $CONFIGFILE ) )
-	echo "Using $SOURCEDATABASE as source database..."
-	echo ""
-fi
-
-echo "Copying database from source..."
-if [[ "$LOCAL" == "false" ]] ; then
-    ssh $REMOTE 'su - postgres -c "pg_dump -O $SOURCEDATABASE | gzip > /var/lib/pgsql/backups/other/$SOURCEDATABASE-FOR-$TICKET.dmp.gz"'
-    ssh $REMOTE 'ls -alh /var/lib/pgsql/backups/other/'
-    read -r -n 1 -p "Press any key to resume ..."
-elif [[ "$LOCAL" == "true" ]] ; then
-    su - postgres -c "pg_dump -O $SOURCEDATABASE | gzip > /var/lib/pgsql/backups/other/$SOURCEDATABASE-FOR-$TICKET.dmp.gz"
-    ls -alh /var/lib/pgsql/backups/other/
-    read -r -n 1 -p "Press any key to resume ..."
-fi
-time rsync -aHS $REMOTE:/var/lib/pgsql/backups/other/$SOURCEDATABASE-FOR-$TICKET.dmp.gz $PWD
+    echo "Stopping service..."
+    systemctl stop $SERVICENAME
+    echo "Dumping local database $DATABASE in /var/lib/pgsql/backups/other/"
+    if [[ ! -d /var/lib/pgsql/backups/other/ ]] ; then
+            mkdir -p /var/lib/pgsql/backups/other/
+    fi
+    su - postgres -c "pg_dump96 -O $DATABASE | gzip > /var/lib/pgsql/backups/other/$DATABASE-PRE-$TICKET.dmp.gz"
+    cp -av data/confluence.cfg.xml confluence.cfg.xml-CURRENT
 
 
-# Collect database creds
-DATABASEUSERNAME=$(awk -F '[<>]' '/username/{print $3}' $CONFIGFILE)
-DATABASEPASSWORD=$(awk -F '[<>]' '/password/{print $3}' $CONFIGFILE)
+    ##Set up the files
+
+    # Clone the data
+    echo "Copying data dir"
+    if [[ "$LOCAL" == "false" ]] ; then
+        time rsync -aHS "$SHAREDOPTS" $REMOTE:$REMOTEPATH/data/ data-REFRESH-"$TICKET"/ || { echo "Failed to rsync remote data." ; exit 1; }
+    elif [[ "$LOCAL" == "true" ]] ; then
+        time rsync -aHS "$SHAREDOPTS" $REMOTEPATH/data/ data-REFRESH-"$TICKET"/ || { echo "Failed to rsync data." ; exit 1; }
+    fi
+    ln -s data-REFRESH-"$TICKET" next.data || { echo "Linking the next data/ dir failed." ; read -r -n 1 -p "Press any key to resume ..."; }
+
+    ## Parse out old settings
+    if [[ $SOURCEDATABASE == "" ]] ; then
+        SOURCEDATABASECONNECTION=$( awk -F '[<>]' '/url/{print $3}' data-REFRESH-"$TICKET"/$( basename $CONFIGFILE ) )
+        SOURCEDATABASE=$( awk -F '[/?]' '{print $4}' <<< "$SOURCEDATABASECONNECTION" )
+        SOURCEDATABASEPASSWORD=$(awk -F '[<>]' '/password/{print $3}' data-REFRESH-"$TICKET"/$( basename $CONFIGFILE ) )
+        echo "Using $SOURCEDATABASE as source database..."
+        echo ""
+    fi
+
+    echo "Copying database from source..."
+    if [[ "$LOCAL" == "false" ]] ; then
+        ssh $REMOTE 'su - postgres -c "pg_dump -O $SOURCEDATABASE | gzip > /var/lib/pgsql/backups/other/$SOURCEDATABASE-FOR-$TICKET.dmp.gz"'
+        ssh $REMOTE 'ls -alh /var/lib/pgsql/backups/other/'
+        read -r -n 1 -p "Press any key to resume ..."
+    elif [[ "$LOCAL" == "true" ]] ; then
+        su - postgres -c "pg_dump -O $SOURCEDATABASE | gzip > /var/lib/pgsql/backups/other/$SOURCEDATABASE-FOR-$TICKET.dmp.gz"
+        ls -alh /var/lib/pgsql/backups/other/
+        read -r -n 1 -p "Press any key to resume ..."
+    fi
+    time rsync -aHS $REMOTE:/var/lib/pgsql/backups/other/$SOURCEDATABASE-FOR-$TICKET.dmp.gz $PWD
 
 
-echo "Re-creating and restoring database..."
-su - postgres -p -c "dropdb $DATABASE" || { echo "Failed to drop existing database" ; exit 1; }
-su - postgres -p -c "createdb -E UNICODE -O $DATABASEUSERNAME $DATABASE" || { echo "Database creation failed"; exit 1; }
-
-export PGPASSWORD=$DATABASEPASSWORD
-time su - postgres -p -c "zcat /var/lib/pgsql/backups/other/$DATABASE-PRE-$TICKET.dmp.gz | psql -U $DATABASEUSERNAME $DATABASE" || { echo "Database import failed"; exit 1; }
-
-# move config files around
-mv -v data-REFRESH-$TICKET/confluence.cfg.xml confluence.cfg.xml-PROD
-mv -v confluence.cfg.xml-CURRENT data-REFRESH-$TICKET/confluence.cfg.xml
-
-## The fancy diffs
-for FILEPAIR in 'confluence.cfg.xml-PROD data-REFRESH-CS0154989/confluence.cfg.xml'
-	do 
-		echo "Checking $FILEPAIR"
-			if [[ "$(sdiff -BWsi $FILEPAIR)" != "" ]]; then
-				sdiff -BWsi $FILEPAIR
-				echo ""
-				echo "^^^^^^^^^^"
-				echo ""
-				echo "What to do?"
-				echo "1\) Copy over"
-				echo "2\) Run vimdiff"
-				echo ""
-				read -r -n 1 -p 'Well? ' CHOICE
-				echo ""
-			    if [ "$CHOICE" = "1" ] ; then
-				    cp -vi $FILEPAIR
-			    elif [ "$CHOICE" = "2" ] ; then
-				    vimdiff $FILEPAIR
-		    	else
-			    	echo "Invalid input, breaking, please do diffs manually"
-				    break
-		        fi  	
-            else
-			    echo "Files match"
-	    	fi
-	done
-
-## Fix Permissions
-echo "Setting permissions..."
-chown -R $FILEOWNER. data-REFRESH-$TICKET
-echo "Permissions set"
+    # Collect database creds
+    DATABASEUSERNAME=$(awk -F '[<>]' '/username/{print $3}' $CONFIGFILE)
+    DATABASEPASSWORD=$(awk -F '[<>]' '/password/{print $3}' $CONFIGFILE)
 
 
-echo "Refresh completed!"
-exit
-fi
+    echo "Re-creating and restoring database..."
+    su - postgres -p -c "dropdb $DATABASE" || { echo "Failed to drop existing database" ; exit 1; }
+    su - postgres -p -c "createdb -E UNICODE -O $DATABASEUSERNAME $DATABASE" || { echo "Database creation failed"; exit 1; }
+
+    export PGPASSWORD=$DATABASEPASSWORD
+    time su - postgres -p -c "zcat /var/lib/pgsql/backups/other/$DATABASE-PRE-$TICKET.dmp.gz | psql -U $DATABASEUSERNAME $DATABASE" || { echo "Database import failed"; exit 1; }
+
+    # move config files around
+    mv -v data-REFRESH-$TICKET/confluence.cfg.xml confluence.cfg.xml-PROD
+    mv -v confluence.cfg.xml-CURRENT data-REFRESH-$TICKET/confluence.cfg.xml
+
+    ## The fancy diffs
+    for FILEPAIR in 'confluence.cfg.xml-PROD data-REFRESH-CS0154989/confluence.cfg.xml'
+        do 
+            echo "Checking $FILEPAIR"
+                if [[ "$(sdiff -BWsi $FILEPAIR)" != "" ]]; then
+                    sdiff -BWsi $FILEPAIR
+                    echo ""
+                    echo "^^^^^^^^^^"
+                    echo ""
+                    echo "What to do?"
+                    echo "1\) Copy over"
+                    echo "2\) Run vimdiff"
+                    echo ""
+                    read -r -n 1 -p 'Well? ' CHOICE
+                    echo ""
+                    if [ "$CHOICE" = "1" ] ; then
+                        cp -vi $FILEPAIR
+                    elif [ "$CHOICE" = "2" ] ; then
+                        vimdiff $FILEPAIR
+                    else
+                        echo "Invalid input, breaking, please do diffs manually"
+                        break
+                    fi  	
+                else
+                    echo "Files match"
+                fi
+        done
+
+    ## Fix Permissions
+    echo "Setting permissions..."
+    chown -R $FILEOWNER. data-REFRESH-$TICKET
+    echo "Permissions set"
+
+
+    echo "Refresh completed!"
+    exit
+    fi
 
 elif [ "$CHOICE" = "2" ] ; then
 
-##################
-###  ROLLBACK ####
-##################
+    ##################
+    ###  ROLLBACK ####
+    ##################
 
-systemctl stop "$SERVICENAME"
+    systemctl stop "$SERVICENAME"
 
-## Reimport database
+    ## Reimport database
 
-# Collect database creds
-DATABASEUSERNAME=$(awk -F '[<>]' '/username/{print $3}' $CONFIGFILE)
-DATABASEPASSWORD=$(awk -F '[<>]' '/password/{print $3}' $CONFIGFILE)
+    # Collect database creds
+    DATABASEUSERNAME=$(awk -F '[<>]' '/username/{print $3}' $CONFIGFILE)
+    DATABASEPASSWORD=$(awk -F '[<>]' '/password/{print $3}' $CONFIGFILE)
 
-if [[ "$DATABASECONNECTION" == "" ]] ; then
-	DATABASECONNECTION=$(awk -F '[<>]' '/url/{print $3}' $CONFIGFILE)
-fi
+    if [[ "$DATABASECONNECTION" == "" ]] ; then
+        DATABASECONNECTION=$(awk -F '[<>]' '/url/{print $3}' $CONFIGFILE)
+    fi
 
-## check if database is local
-if [[ "$DATABASECONNECTION" == *"localhost"* ]]; then
-	## Restore database
-	echo "Re-creating and restoring database..."
-	su - postgres -p -c "dropdb $DATABASE" || { echo "Failed to drop existing database" ; exit 1; }
-	su - postgres -p -c "createdb -E UNICODE -O $DATABASEUSERNAME $DATABASE" || { echo "Database creation failed"; exit 1; }
+    ## check if database is local
+    if [[ "$DATABASECONNECTION" == *"localhost"* ]]; then
+        ## Restore database
+        echo "Re-creating and restoring database..."
+        su - postgres -p -c "dropdb $DATABASE" || { echo "Failed to drop existing database" ; exit 1; }
+        su - postgres -p -c "createdb -E UNICODE -O $DATABASEUSERNAME $DATABASE" || { echo "Database creation failed"; exit 1; }
 
-	export PGPASSWORD=$DATABASEPASSWORD
-	time su - postgres -p -c "zcat /var/lib/pgsql/backups/other/$DATABASE-PRE-$TICKET.dmp.gz | psql -U $DATABASEUSERNAME $DATABASE" || { echo "Database import failed"; exit 1; }
-else
-	echo "Database is not local, check at $DATABASECONNECTION"
-	echo "Please restore database there, will continue after a pause"
-	read -r -n 1 -p "Press any key to continue ..."
-fi
+        export PGPASSWORD=$DATABASEPASSWORD
+        time su - postgres -p -c "zcat /var/lib/pgsql/backups/other/$DATABASE-PRE-$TICKET.dmp.gz | psql -U $DATABASEUSERNAME $DATABASE" || { echo "Database import failed"; exit 1; }
+    else
+        echo "Database is not local, check at $DATABASECONNECTION"
+        echo "Please restore database there, will continue after a pause"
+        read -r -n 1 -p "Press any key to continue ..."
+    fi
 
-## Restore files
-mv data/attachments prev.data/ || { echo "Failed to move attachments back..."; exit 1; }
-mv current failed-"$TICKET" && mv data failed.data-"$TICKET" || { echo "Failed to move symlinks to failed targets..." ; exit 1; }
-mv prev current && mv prev.data data || { echo "Failed to restore original symlinks..." ; exit 1; }
+    ## Restore files
+    mv data/attachments prev.data/ || { echo "Failed to move attachments back..."; exit 1; }
+    mv current failed-"$TICKET" && mv data failed.data-"$TICKET" || { echo "Failed to move symlinks to failed targets..." ; exit 1; }
+    mv prev current && mv prev.data data || { echo "Failed to restore original symlinks..." ; exit 1; }
 
-## Start and watch
-systemctl start "$SERVICENAME" && tail -F $APPLOG
+    ## Start and watch
+    systemctl start "$SERVICENAME" && tail -F $APPLOG
 
-exit
+    exit
 else
 	echo "Exiting!"
 	exit 1
