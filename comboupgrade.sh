@@ -399,9 +399,9 @@ else
 fi
 
 ## Restore files
-mv data/attachments prev.data/ || { echo "Failed to move attachments back..."; exit 1; }
-mv current failed-"$TICKET" && mv data failed.data-"$TICKET" || { echo "Failed to move symlinks to failed targets..." ; exit 1; }
-mv prev current && mv prev.data data || { echo "Failed to restore original symlinks..." ; exit 1; }
+mv -v data/attachments prev.data/ || { echo "Failed to move attachments back..."; exit 1; }
+mv -v current failed-"$TICKET" && -v mv data failed.data-"$TICKET" || { echo "Failed to move symlinks to failed targets..." ; exit 1; }
+mv -v prev current && mv -v prev.data data || { echo "Failed to restore original symlinks..." ; exit 1; }
 
 ## Start and watch
 systemctl start "$SERVICENAME" && tail -F $APPLOG
