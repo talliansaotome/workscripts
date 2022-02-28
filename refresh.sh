@@ -1,5 +1,5 @@
 #!/bin/bash
-### Script to automate upgrading Jira/Confluence instances, following the guides at https://wiki.contegix.com/display/~cbilyeu/Upgrading+Jira and https://wiki.contegix.com/display/~cbilyeu/Upgrading+Confluence
+### Script to automate refreshing Jira/Confluence instances, following the guide at https://wiki.contegix.com/display/~cbilyeu/Refreshes
 ## Written by lmiller
 
 
