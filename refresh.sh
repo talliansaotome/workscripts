@@ -209,7 +209,6 @@ echo ""
 read -r -n 1 -p 'Well? ' CHOICE
 echo ""
 
-
 if [ "$CHOICE" = "1" ] ; then
     #########################
     ### TIME FOR WORK ######
@@ -269,7 +268,7 @@ if [ "$CHOICE" = "1" ] ; then
     if [[ $SOURCEDATABASE == "" ]] ; then
         SOURCEDATABASECONNECTION=$( awk -F '[<>]' '/url/{print $3}' data-REFRESH-"$TICKET"/$( basename $CONFIGFILE ) )
         SOURCEDATABASE=$( awk -F '[/?]' '{print $4}' <<< "$SOURCEDATABASECONNECTION" )
-        SOURCEDATABASEPASSWORD=$(awk -F '[<>]' '/password/{print $3}' data-REFRESH-"$TICKET"/$( basename $CONFIGFILE ) )
+        #SOURCEDATABASEPASSWORD=$(awk -F '[<>]' '/password/{print $3}' data-REFRESH-"$TICKET"/$( basename $CONFIGFILE ) )
         echo "Using $SOURCEDATABASE as source database..."
         echo ""
     fi
@@ -336,12 +335,16 @@ if [ "$CHOICE" = "1" ] ; then
     chown -R $FILEOWNER. data-REFRESH-$TICKET
     echo "Permissions set"
 
+    echo "Starting service!"
+    systemctl start $SERVICENAME
+    tail -F $APPLOG
+
 
     echo "Refresh completed!"
     exit
     fi
 
-elif [ "$CHOICE" = "2" ] ; then
+elif [[ "$CHOICE" = "2" ]] ; then
 
     ##################
     ###  ROLLBACK ####
