@@ -171,7 +171,7 @@ echo ""
 ###Put ourselves in a screen session
 if [[ $STY = "" ]]; then
 	echo "Running ourself in a screen session."
-	screen -S "$( basename "$0" .sh)" -L $0 --ticket "$TICKET" --remote "$REMOTE" --app "$APP" --database "$DATABASE" --service "$SERVICENAME"
+	screen -S "$( basename "$0" .sh)" -L $0 --ticket "$TICKET" --remote "$REMOTE" --app "$APP" --database "$DATABASE" --service "$SERVICENAME" --remotepath "$REMOTEPATH"
 	printf "\n\n\n--------------------------- $( date +%FT%T ) $TICKET ---------------------\n\n\n" >> "$( basename "$0" )".$TICKET.log
 	cat screenlog.? >> "$( basename "$0" .sh )".$TICKET.log
 	rm screenlog.?
@@ -342,8 +342,7 @@ if [ "$CHOICE" = "1" ] ; then
 
     echo "Refresh completed!"
     exit
-    fi
-
+    
 elif [[ "$CHOICE" = "2" ]] ; then
 
     ##################
