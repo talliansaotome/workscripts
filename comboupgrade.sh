@@ -138,22 +138,24 @@ if [[ $SERVICENAME == "" ]] ; then
 		SERVICENAME=$( systemctl -al | grep j2ee | awk '{print $1}' )
 		echo "Using $SERVICENAME as the active service."
 	else
-		echo "Unable to automatically determine service, what should we be using?"
-		echo ""
-		systemctl |grep j2ee
-		echo ""
-		read -r -p "Service name? " SERVICENAME
-		echo ""
+		while [[ $SERVICENAME == "" ]] ; do
+			echo "Unable to automatically determine service, what should we be using?"
+			echo ""
+			systemctl |grep j2ee
+			echo ""
+			read -r -p "Service name? " SERVICENAME
+			echo ""
+		done
 	fi
 fi
 
-if [[ "$TICKET" == "" ]] ; then
+while [[ "$TICKET" == "" ]] ; do
 	read -r -p "Ticket Number? " TICKET
-fi
+done
 
-if [[ "$VERSION" == "" ]] ; then
+while [[ "$VERSION" == "" ]] ; do
 	read -r -p "Target Version? " VERSION
-fi
+done
 
 echo ""
 
