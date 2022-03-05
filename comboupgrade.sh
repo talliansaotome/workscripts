@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 ### Script to automate upgrading Jira/Confluence instances, following the guides at https://wiki.contegix.com/display/~cbilyeu/Upgrading+Jira and https://wiki.contegix.com/display/~cbilyeu/Upgrading+Confluence
 ## Written by lmiller
 
