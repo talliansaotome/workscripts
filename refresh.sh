@@ -3,6 +3,8 @@
 ## Written by lmiller
 
 
+###Need to check for and install PGSQL tools 11, and refactor remote calls to just pull the pg_dump locally instead of doing it via piped ssh commands
+
 ##Collect info we will need
 
 # Define getopt handling
@@ -247,13 +249,21 @@ if [ "$CHOICE" = "1" ] ; then
 
     echo "Stopping service..."
     systemctl stop $SERVICENAME
-    echo "Dumping local database $DATABASE in /var/lib/pgsql/backups/other/"
-    if [[ ! -d /var/lib/pgsql/backups/other/ ]] ; then
+    if [[ "$LOCAL" == "true" ]] ; then
+        echo "Dumping local database $DATABASE in /var/lib/pgsql/backups/other/"
+        if [[ ! -d /var/lib/pgsql/backups/other/ ]] ; then
             mkdir -p /var/lib/pgsql/backups/other/
+        fi
+        su - postgres -c "pg_dump -O $DATABASE | gzip > /var/lib/pgsql/backups/other/$DATABASE-PRE-$TICKET.dmp.gz"
+        cp -av data/confluence.cfg.xml confluence.cfg.xml-CURRENT
+    elif [[ "$LOCAL" == "false" ]] ; then
+        echo "Dumping local database $DATABASE in /var/lib/pgsql/backups/other/"
+        if [[ ! -d /var/lib/pgsql/backups/other/ ]] ; then
+            ssh $REMOTE 'mkdir -p /var/lib/pgsql/backups/other/'
+        fi
+        ssh $REMOTE 'su - postgres -c "pg_dump -O $DATABASE | gzip > /var/lib/pgsql/backups/other/$DATABASE-PRE-$TICKET.dmp.gz"'
+        ssh $REMOTE 'cp -av data/confluence.cfg.xml confluence.cfg.xml-CURRENT'
     fi
-    su - postgres -c "pg_dump96 -O $DATABASE | gzip > /var/lib/pgsql/backups/other/$DATABASE-PRE-$TICKET.dmp.gz"
-    cp -av data/confluence.cfg.xml confluence.cfg.xml-CURRENT
-
 
     ##Set up the files
 
@@ -305,7 +315,7 @@ if [ "$CHOICE" = "1" ] ; then
     mv -v confluence.cfg.xml-CURRENT data-REFRESH-$TICKET/confluence.cfg.xml
 
     ## The fancy diffs
-    for FILEPAIR in 'confluence.cfg.xml-PROD data-REFRESH-CS0154989/confluence.cfg.xml'
+    for FILEPAIR in "confluence.cfg.xml-PROD data-REFRESH-$TICKET/confluence.cfg.xml"
         do 
             echo "Checking $FILEPAIR"
                 if [[ "$(sdiff -BWsi $FILEPAIR)" != "" ]]; then
@@ -334,7 +344,7 @@ if [ "$CHOICE" = "1" ] ; then
 
     ## Fix Permissions
     echo "Setting permissions..."
-    chown -R $FILEOWNER. data-REFRESH-$TICKET
+    chown -R $FILEOWNER: data-REFRESH-$TICKET
     echo "Permissions set"
 
     echo "Starting service!"
