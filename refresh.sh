@@ -172,6 +172,15 @@ done
 
 echo ""
 
+## Check to see if source server is keyed for SSH
+if ssh  -o PasswordAuthentication=no "$REMOTE" exit; then
+    echo "Source server keyed properly..."
+else
+    echo "Please key remote server so SSH commands can work!"
+    exit 1
+fi
+
+
 ###Put ourselves in a screen session
 if [[ $STY = "" ]]; then
 	echo "Running ourself in a screen session."
