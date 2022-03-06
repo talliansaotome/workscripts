@@ -356,11 +356,25 @@ if [[ "$DATABASECONNECTION" == *"localhost"* ]]; then
 		exit 1
 	fi
 else
-	echo "Database is not local, check at $DATABASECONNECTION"
-	echo "Please run the following there"
-	echo "su - postgres -c \"pg_dump -O $DATABASE | gzip > /var/lib/pgsql/backups/other/$DATABASE-PRE-$TICKET.dmp.gz\""
-	read -r -n 1 -p "Press any key to continue ..."
+	## Database Dump
+	su - postgres -c "mkdir -p /var/lib/pgsql/backups/other/" 
+	DATABASEUSERNAME=$(awk -F '[<>]' '/username/{print $3}' $CONFIGFILE)
+	DATABASEPASSWORD=$(awk -F '[<>]' '/password/{print $3}' $CONFIGFILE)
+	DATABASEHOST=$(echo $DATABASECONNECTION | awk -F'[:/]' '{print $5}')
+	DATABASEPORT=$(echo $DATABASECONNECTION | awk -F'[:/]' '{print $6}')
+
+	export PGPASSWORD=$DATABASEPASSWORD
+	time "pg_dump -H $DATABASEHOST -P $DATABASEPORT -U $DATABASEUSERNAME -O $DATABASE | gzip > /var/lib/pgsql/backups/other/$DATABASE-PRE-$TICKET.dmp.gz" || { echo "Database dump failed"; exit 1; }
+	echo "checking to be sure backup was created"
+	if [[ -f /var/lib/pgsql/backups/other/$DATABASE-PRE-$TICKET.dmp.gz ]] ; then
+		ls -al /var/lib/pgsql/backups/other/"$DATABASE"-PRE-"$TICKET".dmp.gz
+	else
+		echo "Database not dumped!"
+		exit 1
+	fi
 fi
+read -r -n 1 -p "Press any key to continue ..."
+
 
 ## Start and watch
 systemctl start "$SERVICENAME" && tail -F $APPLOG
