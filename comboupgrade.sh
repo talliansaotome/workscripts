@@ -409,10 +409,18 @@ if [[ "$DATABASECONNECTION" == *"localhost"* ]]; then
 	export PGPASSWORD=$DATABASEPASSWORD
 	time su - postgres -p -c "zcat /var/lib/pgsql/backups/other/$DATABASE-PRE-$TICKET.dmp.gz | psql -U $DATABASEUSERNAME $DATABASE" || { echo "Database import failed"; exit 1; }
 else
-	echo "Database is not local, check at $DATABASECONNECTION"
-	echo "Please restore database there, will continue after a pause"
-	read -r -n 1 -p "Press any key to continue ..."
+	## Restore database
+	DATABASEHOST=$(echo $DATABASECONNECTION | awk -F'[:/]' '{print $5}')
+	DATABASEPORT=$(echo $DATABASECONNECTION | awk -F'[:/]' '{print $6}')
+
+	echo "Re-creating and restoring database..."
+	export PGPASSWORD=$DATABASEPASSWORD
+	dropdb -h $DATABASEHOST -p $DATABASEPORT -U $DATABASEUSERNAME  || { echo "Failed to drop existing database" ; exit 1; }
+	su - postgres -p -c "createdb -E UNICODE -O $DATABASEUSERNAME $DATABASE" || { echo "Database creation failed"; exit 1; }
+
+	time su - postgres -p -c "zcat /var/lib/pgsql/backups/other/$DATABASE-PRE-$TICKET.dmp.gz | psql -U $DATABASEUSERNAME $DATABASE" || { echo "Database import failed"; exit 1; }
 fi
+	read -r -n 1 -p "Press any key to continue ..."
 
 ## Restore files
 mv -v data/attachments prev.data/ || { echo "Failed to move attachments back..."; exit 1; }
