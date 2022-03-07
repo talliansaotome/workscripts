@@ -17,7 +17,6 @@ do
 			case "$2" in
 			*)
 				TICKET=$2
-				echo "Using $TICKET"
 				shift 2
 				;;
 			esac
@@ -26,7 +25,6 @@ do
 			case "$2" in
 			*)
 				VERSION=$2
-				echo "Targetting version $VERSION"
 				shift 2
 				;;
 			esac
@@ -35,7 +33,6 @@ do
 			case "$2" in
 			*)
 				SERVICENAME=$2
-				echo "Controlling the $SERVICENAME service"
 				shift 2
 				;;
 			esac
@@ -44,7 +41,6 @@ do
 			case "$2" in
 			*)
 				DATABASE=$2
-				echo "Using the $DATABASE database"
 				shift 2
 				;;
 			esac
@@ -53,12 +49,10 @@ do
 			case "$2" in
 			jira)
 				APP=$2
-				echo "Targetting $APP"
 				shift 2
 				;;
 			confluence)
 				APP=$2
-				echo "Targetting $APP"
 				shift 2
 				;;
 			*)
@@ -89,7 +83,6 @@ if [[ $APP == "" ]] ; then
 		APPLOG=data/logs/atlassian-confluence.log
 		echo "We are working with Confluence."
 		FILEOWNER=$( stat -c '%U' data/confluence.cfg.xml )
-		echo "Files are owned by $FILEOWNER"
 		SHAREDOPTS=$( echo --exclude={attachments,bundled-*,plugins-*,logs,temp,backups,clear-cache,cacheclear,import,export,backup,recovery,webresource-temp} )
 	elif [[ -f data/dbconfig.xml ]] ; then
 		APP=jira
@@ -174,6 +167,8 @@ echo "Upgrading $APP"
 echo "Using database $DATABASE"
 echo "Controlling service $SERVICENAME"
 echo "Targetting version $VERSION"
+echo "Files are owned by $FILEOWNER"
+
 echo ""
 echo "Please verify the above before proceeding."
 echo ""
@@ -335,7 +330,7 @@ systemctl stop "$SERVICENAME"
 ##Move files
 echo "Moving the files..."
 time rsync -aHS "$SHAREDOPTS" --delete data/ next.data/ || { echo "Failed to do final rsync." ; exit 1; }
-mv -v data/attachments next.data/ || { echo "Failed to move attachments." ; exit 1; }
+mv -v data/attachments next.data/ || { echo "Failed to move attachments." ; read -r -n 1 -p "Press any key to continue ..."; }
 mv -v current prev && mv -v next current || { echo "Failed to update application symlinks." ; exit 1; }
 mv -v data prev.data && mv -v next.data data || { echo "Failed to update data symlinks." ; exit 1; }
 
