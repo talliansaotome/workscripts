@@ -90,7 +90,6 @@ if [[ $APP == "" ]] ; then
 		APPLOG=data/log/atlassian-jira.log
 		echo "We are working with Jira."
 		FILEOWNER=$( stat -c '%U' data/dbconfig.xml )
-		echo "Files are owned by $FILEOWNER"
 		SHAREDOPTS=$( echo --exclude={data/attachments,analytics-logs,backup,caches,*.bak,tmp,temp,export,import,log,logs,plugins/.??*,CACHECLEAR*,cache-clear*,cacheclear*} )
 	else
 		echo "No app install detected."
