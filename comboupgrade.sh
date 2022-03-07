@@ -303,6 +303,12 @@ echo "Permissions set"
 if [[ $APP = confluence ]] ; then
 	echo "Copying okta, check manually"
 	cp -vn current/confluence/WEB-INF/lib/okta-confluence-*.jar next/confluence/WEB-INF/lib/
+	# Nesting if statements because I don't know if just a straight copy is safe, and there is a diff earlier for handling them both existing
+	if [[ -f current/confluence/WEB-INF/classes/okta-config-confluence.xml ]]; then
+		if [[ ! -f next/confluence/WEB-INF/classes/okta-config-confluence.xml ]];then
+			cp -v current/confluence/WEB-INF/classes/okta-config-confluence.xml next/confluence/WEB-INF/classes/okta-config-confluence.xml
+		fi
+	fi
 elif [[ $APP = jira ]] ; then
 	echo "Checking for okta. Deal with it if you find anything."
 	find current/ | grep okta
@@ -366,7 +372,7 @@ else
 	time "pg_dump -H $DATABASEHOST -P $DATABASEPORT -U $DATABASEUSERNAME -O $DATABASE | gzip > /var/lib/pgsql/backups/other/$DATABASE-PRE-$TICKET.dmp.gz" || { echo "Database dump failed"; exit 1; }
 	echo "checking to be sure backup was created"
 	if [[ -f /var/lib/pgsql/backups/other/$DATABASE-PRE-$TICKET.dmp.gz ]] ; then
-		ls -al /var/lib/pgsql/backups/other/"$DATABASE"-PRE-"$TICKET".dmp.gz
+		ls -alhrt /var/lib/pgsql/backups/other/"$DATABASE"-PRE-"$TICKET".dmp.gz
 	else
 		echo "Database not dumped!"
 		exit 1
