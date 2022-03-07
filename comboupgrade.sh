@@ -330,7 +330,12 @@ systemctl stop "$SERVICENAME"
 ##Move files
 echo "Moving the files..."
 time rsync -aHS "$SHAREDOPTS" --delete data/ next.data/ || { echo "Failed to do final rsync." ; exit 1; }
-mv -v data/attachments next.data/ || { echo "Failed to move attachments." ; read -r -n 1 -p "Press any key to continue ..."; }
+if [[ $APP = confluence ]] ; then
+	mv -v data/attachments next.data/ || { echo "Failed to move attachments." ; read -r -n 1 -p "Press any key to continue ..."; }
+elif [[ $APP = jira ]] ; then
+	mv -v data/data/attachments next.data/ || { echo "Failed to move attachments." ; read -r -n 1 -p "Press any key to continue ..."; }
+fi
+
 mv -v current prev && mv -v next current || { echo "Failed to update application symlinks." ; exit 1; }
 mv -v data prev.data && mv -v next.data data || { echo "Failed to update data symlinks." ; exit 1; }
 
